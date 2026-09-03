@@ -1,0 +1,7 @@
+{
+  "name": "Test User",
+  "email": "test@example.com",
+  "projectType": "Video Editing",
+  "budget": "$500 - $1,000",
+  "message": "This is a test message to verify the contact form is working properly."
+}
