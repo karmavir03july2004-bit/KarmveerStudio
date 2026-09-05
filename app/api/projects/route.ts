@@ -5,9 +5,14 @@ import { prisma } from '@/lib/prisma'
 import { slugify } from '@/lib/utils'
 import { normalizeAspectRatio, validateProjectUrl } from '@/lib/video-utils'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   if (!process.env.DATABASE_URL) {
-    return NextResponse.json({ success: true, projects: [] })
+    return NextResponse.json(
+      { success: false, error: 'Database not configured' },
+      { status: 503, headers: { 'Cache-Control': 'no-store' } }
+    )
   }
 
   try {
@@ -40,12 +45,15 @@ export async function GET(request: NextRequest) {
       ],
     })
 
-    return NextResponse.json({ success: true, projects })
+    return NextResponse.json(
+      { success: true, projects },
+      { headers: { 'Cache-Control': 'no-store' } }
+    )
   } catch (error) {
     console.error('Projects fetch error:', error)
     return NextResponse.json(
       { success: false, error: 'Failed to fetch projects' },
-      { status: 500 }
+      { status: 503, headers: { 'Cache-Control': 'no-store' } }
     )
   }
 }

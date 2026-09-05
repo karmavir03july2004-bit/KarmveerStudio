@@ -18,22 +18,43 @@ export default function WorksPage() {
   const [selectedCategory, setSelectedCategory] = useState('ALL')
   const [projects, setProjects] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
-    async function fetchProjects() {
+    let cancelled = false
+
+    async function fetchProjects(attempt = 0) {
       try {
-        const response = await fetch('/api/projects?published=true')
+        const response = await fetch('/api/projects?published=true', {
+          cache: 'no-store',
+        })
         const data = await response.json()
-        if (data.success) {
+
+        if (!response.ok || !data.success) {
+          if (attempt === 0) {
+            await fetchProjects(1)
+            return
+          }
+          throw new Error(data.error || 'Failed to fetch projects')
+        }
+
+        if (!cancelled) {
           setProjects(data.projects)
+          setLoadError(false)
         }
       } catch (error) {
         console.error('Failed to fetch projects:', error)
+        if (!cancelled) setLoadError(true)
       } finally {
-        setLoading(false)
+        if (!cancelled) setLoading(false)
       }
     }
+
     fetchProjects()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const filteredProjects = selectedCategory === 'ALL'
@@ -69,6 +90,18 @@ export default function WorksPage() {
           {loading ? (
             <div className="text-center py-12">
               <div className="inline-block w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            </div>
+          ) : loadError ? (
+            <div className="text-center py-24">
+              <p className="text-white/60 text-xl font-display mb-6">
+                WORKS COULD NOT BE LOADED.
+              </p>
+              <button
+                onClick={() => window.location.reload()}
+                className="text-white/60 hover:text-white transition-colors"
+              >
+                TRY AGAIN
+              </button>
             </div>
           ) : filteredProjects.length === 0 ? (
             <div className="text-center py-24">
